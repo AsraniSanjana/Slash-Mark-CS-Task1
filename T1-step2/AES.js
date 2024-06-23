@@ -2,22 +2,27 @@
 
 const crypto = require('crypto');
 
-const IV_LENGTH = 16; // For AES, this is always 16
+const IV_LENGTH = 16; // AES-256-CBC IV length is 16 bytes
 
 function encrypt(text, encryptionKey, iv) {
     let ivBuffer;
 
-    if (!iv) {
-        ivBuffer = crypto.randomBytes(IV_LENGTH);
+    // Ensure IV is 16 ASCII characters
+    if (iv) {
+        if (iv.length !== 16) {
+            throw new Error('IV must be 16 ASCII characters long.');
+        }
+        ivBuffer = Buffer.from(iv, 'ascii');
     } else {
-        ivBuffer = Buffer.from(iv, 'hex');
+        ivBuffer = crypto.randomBytes(IV_LENGTH);
     }
 
     let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(encryptionKey), ivBuffer);
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    let result = ivBuffer.toString('hex') + ':' + encrypted;
-    return result;
+    let encrypted = cipher.update(text);
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    console.log("hi sanj, ivbuffer is " + ivBuffer + " iv is "+ iv)
+    console.log("ivbuffer.tostring hex is " + ivBuffer.toString('hex')  + " ivbuffer.tostring ascii is " + ivBuffer.toString('ascii') )
+    return ivBuffer.toString('ascii') + ':' + encrypted.toString('hex');
 }
 
 function decrypt(text, encryptionKey) {
