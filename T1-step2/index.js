@@ -31,15 +31,21 @@ app.post('/encrypt', (req, res) => {
     }
 });
 
+
 // Endpoint for decryption
 app.post('/decrypt', (req, res) => {
-    const { encryptedText, encryptionKey } = req.body;
+    const { text, encryptionKey, iv } = req.body;
 
-    if (!encryptedText || !encryptionKey) {
+    if (!text || !encryptionKey || !iv) {
+        // console.log(encryptedText)
+        console.log(text)
+        console.log(encryptionKey)
+        console.log(iv)
+        
         return res.status(400).json({ error: 'Missing required parameters.' });
     }
     try {
-        const decryptedText = decrypt(encryptedText, encryptionKey);
+        const decryptedText = decrypt(text, encryptionKey, iv);
         res.json({ decryptedText });
     } catch (error) {
         console.error(error);
