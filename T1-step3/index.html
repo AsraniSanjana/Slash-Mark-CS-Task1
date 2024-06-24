@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AES Encryption/Decryption</title>
+    <script>
+        function validateInputs(text, encryptionKey, iv, keySize, action) {
+            if (!text) {
+                return 'Text is required.';
+            }
+            const keyLengths = {
+                '128': 16,
+                '192': 24,
+                '256': 32
+            };
+            const expectedKeyLength = keyLengths[keySize];
+            if (encryptionKey.length !== expectedKeyLength) {
+                return `You have chosen AES-${keySize}. The encryption key length must be ${expectedKeyLength} bytes.`;
+            }
+            if (iv && iv.length !== 16) {
+                return 'For AES, IV length must be 16 bytes.';
+            }
+            if (action === 'decrypt' && !text.includes(':')) {
+                return 'For decryption, text must be in the format IV:ciphertext.';
+            }
+            return null;
+        }
+
+        async function encryptDecrypt(action) {
+            const text = document.getElementById('text').value;
+            const encryptionKey = document.getElementById('encryptionKey').value;
+            const iv = document.getElementById('iv').value.trim();
+            const keySize = document.getElementById('keySize').value;
+
+            const validationError = validateInputs(text, encryptionKey, iv, keySize, action);
+            if (validationError) {
+                alert(validationError);
+                return;
+            }
+
+            const requestData = { text, encryptionKey, keySize };
+            if (iv) {
+                requestData.iv = iv;
+            }
+
+            const response = await fetch(`/${action}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData),
+            });
+
+            const result = await response.json();
+            if (result.error) {
+                alert(`Error: ${result.error}`);
+            } else {
+                document.getElementById('output').value = action === 'encrypt' ? result.encryptedText : result.decryptedText;
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>AES Encryption/Decryption</h1>
+    <div>
+        <label for="text">Text:</label><br>
+        <textarea id="text" rows="4" cols="50"></textarea><br>
+        <label for="encryptionKey">Encryption Key:</label><br>
+        <input type="text" id="encryptionKey"><br>
+        <label for="iv">IV (optional):</label><br>
+        <input type="text" id="iv"><br>
+        <label for="keySize">Key Size:</label><br>
+        <select id="keySize">
+            <option value="128">AES-128-CBC</option>
+            <option value="192">AES-192-CBC</option>
+            <option value="256">AES-256-CBC</option>
+        </select><br><br>
+        <button onclick="encryptDecrypt('encrypt')">Encrypt</button>
+        <button onclick="encryptDecrypt('decrypt')">Decrypt</button><br><br>
+        <label for="output">Output:</label><br>
+        <textarea id="output" rows="4" cols="50" readonly></textarea>
+    </div>
+</body>
+</html>
